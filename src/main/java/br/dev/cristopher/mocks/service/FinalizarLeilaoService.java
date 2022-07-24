@@ -8,12 +8,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class FinalizarLeilaoService {
-	@Autowired
 	private LeilaoRepository leiloes;
+	private EnviadorDeEmails enviadorDeEmails;
+	@Autowired
+	public FinalizarLeilaoService(LeilaoRepository leiloes, EnviadorDeEmails enviadorDeEmails) {
+		this.leiloes = leiloes;
+		this.enviadorDeEmails = enviadorDeEmails;
+	}
 
 	public void finalizarLeiloesExpirados() {
 		LocalDate seteDiasAtras = LocalDate.now().minusDays(7);
@@ -23,10 +29,11 @@ public class FinalizarLeilaoService {
 			leilao.setLanceVencedor(maiorLance);
 			leilao.fechar();
 			leiloes.save(leilao);
+			enviadorDeEmails.enviarEmailVencedorLeilao(maiorLance);
 		});
 	}
 	private Lance maiorLanceDadoNoLeilao(Leilao leilao) {
-		List<Lance> lancesDoLeilao = leilao.getLances();
+		List<Lance> lancesDoLeilao = new ArrayList<>(leilao.getLances());
 		lancesDoLeilao.sort((lance1, lance2) -> {
 			return lance2.getValor().compareTo(lance1.getValor());
 		});
